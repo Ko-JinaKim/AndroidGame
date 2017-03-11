@@ -1,4 +1,4 @@
-package com.example.administrator.game;
+package com.example.administrator.myapplication3;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -9,22 +9,29 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class GameActivity extends AppCompatActivity {
-    private GameView mView;
+public class Main3Activity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mView = new GameView(this);
-        setContentView(mView);
+        setContentView(R.layout.activity_main3);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_game, menu);
+        getMenuInflater().inflate(R.menu.menu_main3, menu);
         return true;
     }
 
@@ -41,17 +48,5 @@ public class GameActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mView.start();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mView.stop();
     }
 }
