@@ -5,12 +5,14 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.SurfaceTexture;
+import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+//import java.util.logging.Handler;
 
 /**
  * Created by Administrator on 2017-03-11.
@@ -37,10 +39,20 @@ public class GameView extends TextureView implements
 
     private int mLife;
 
+    private ArrayList<DrawableItem> mItemList; //mBlockList
+
+    private ArrayList<Block> mBlockList;
+    private long mGameStartTime;
+
+
+    private Handler mHandler;
+
+
     public GameView(final Context context){
         super(context);
         setSurfaceTextureListener(this);
         setOnTouchListener(this);
+        mHandler = new Handler();
         mThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -215,7 +227,7 @@ public class GameView extends TextureView implements
     }
 
 
-    private ArrayList<DrawableItem> mItemList; //mBlockList
+
 
     public void readyObjects(int width, int height){
         mBlockWidth = width/10;
@@ -223,14 +235,16 @@ public class GameView extends TextureView implements
         mLife = 5;
 
         mItemList = new ArrayList<DrawableItem>(); // mItemList 초기화
+        mBlockList = new ArrayList<Block>();
         for (int i = 0; i< BLOCK_COUNT ;i++){
             float blockTop = i/10*mBlockHeight;
             float blockLeft = i %10*mBlockWidth;
             float blockBottom = blockTop + mBlockHeight;
             float blockRight = blockLeft + mBlockWidth;
-            mItemList.add(new Block(blockTop,blockLeft,blockBottom,blockRight));
-        }
+            mBlockList.add(new Block(blockTop,blockLeft,blockBottom,blockRight));
 
+        }
+        mItemList.addAll(mBlockList);
         mPad = new Pad(height*0.8f, height*0.85f);
         mItemList.add(mPad);
         mPadHalfWidth = width/10;
@@ -238,6 +252,8 @@ public class GameView extends TextureView implements
         mBallRadius = width < height ? width/40 : height /40;
         mBall = new Ball(mBallRadius,width/2, height/2);
         mItemList.add(mBall);
+        mLife = 5;
+        mGameStartTime = System.currentTimeMillis();
     }
 
     //특정 좌표에 있는 블록을 가져오는 메소드
@@ -245,11 +261,22 @@ public class GameView extends TextureView implements
         int index = (int)(x / mBlockWidth)+ (int)(y/mBlockHeight) *10;
         if(0<=index && index < BLOCK_COUNT){
             Block block = (Block) mItemList.get(index);
-            if(block.ismIsExist()){
+            if(block.isExist()){
                 return block;
             }
         }
         return null;
+    }
+
+
+    private int getBlockCount(){
+        int count =0;
+        for(Block block : mBlockList){
+            if(block.isExist()){
+                count++;
+            }
+        }
+        return count;
     }
 
 

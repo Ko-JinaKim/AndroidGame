@@ -61,7 +61,7 @@ public class Block implements DrawableItem {
 
     }
     // 블록이 존재하는가 ? 그러면 true
-    public boolean ismIsExist (){
+    public boolean isExist (){
         return mIsExist;
     }
 
