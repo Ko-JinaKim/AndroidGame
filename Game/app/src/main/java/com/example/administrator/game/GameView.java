@@ -10,6 +10,8 @@ import android.view.TextureView;
 import android.view.View;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+
 /**
  * Created by Administrator on 2017-03-11.
  */
@@ -44,19 +46,26 @@ public class GameView extends TextureView implements
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+        readyObjects(width,height);
+
 
     }
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+        readyObjects(width, height);
 
     }
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        //폐기를 동기화 한다.
+        synchronized (this){
+            return true;
+        }
 
 
-        return false;
+        //return false;
     }
 
     @Override
@@ -71,22 +80,28 @@ public class GameView extends TextureView implements
                 Paint paint = new Paint();
                 paint.setColor(Color.RED);
                 paint.setStyle(Paint.Style.FILL);
-                int i = 0;
-                while (mIsRunnable){ // 반복
 
-                    Canvas canvas = lockCanvas();
-                    if(canvas == null){
-                        continue; // 반복문 처음으로 돌아감.
-                    }
-                    canvas.drawColor(Color.BLACK);
-                    // mTouchedX와 mTouchedY 를 중심으로 한다.
-                    canvas.drawCircle(mTouchedX,mTouchedY,50,paint);
-                    unlockCanvasAndPost(canvas);
-                    i++;
-                    if(i>1000){
-                        i = 0;
-                    }
+                while (true){ // 반복
 
+                    synchronized (GameView.this) {
+                        if (!mIsRunnable) {
+                            break;
+                        }
+
+
+                        Canvas canvas = lockCanvas();
+                        if (canvas == null) {
+                            continue; // 캔버스를 가져올 수 없을 때는 루프를 다시 시작.
+                        }
+                        canvas.drawColor(Color.BLACK);
+
+                        for (Block item : mItemList) {
+                            //mItemList의 내용이 하나씩 block에 전달된다.
+                            item.draw(canvas, paint);
+                        }
+                        unlockCanvasAndPost(canvas);
+
+                    }
                 }
 
             }
@@ -108,5 +123,21 @@ public class GameView extends TextureView implements
         mTouchedY = event.getY();
 
         return true;
+    }
+
+
+    private ArrayList<Block> mItemList; //mBlockList
+
+    public void readyObjects(int width, int height){
+        float blockWidth = width/10;
+        float blockHeight = height/20;
+        mItemList = new ArrayList<Block>(); // mItemList 초기화
+        for (int i = 0; i< 100;i++){
+            float blockTop = i/10*blockHeight;
+            float blockLeft = i %10*blockWidth;
+            float blockBottom = blockTop + blockHeight;
+            float blockRight = blockLeft + blockWidth;
+            mItemList.add(new Block(blockTop,blockLeft,blockBottom,blockRight));
+        }
     }
 }

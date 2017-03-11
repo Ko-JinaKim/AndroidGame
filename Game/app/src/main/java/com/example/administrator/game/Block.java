@@ -40,7 +40,8 @@ public class Block {
         }
     }
 
-    private ArrayList<Block> mItemList;
+/*    private ArrayList<Block> mItemList;
+
     public void readyObjects(int width, int height){
         float blockWidth = width/10;
         float blockHeight = height/20;
@@ -52,5 +53,5 @@ public class Block {
             float blockRight = blockLeft + blockWidth;
             mItemList.add(new Block(blockTop,blockLeft,blockBottom,blockRight));
         }
-    }
+    }*/
 }
