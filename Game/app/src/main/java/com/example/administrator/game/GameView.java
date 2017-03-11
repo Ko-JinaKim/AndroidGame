@@ -19,9 +19,23 @@ import java.util.ArrayList;
 public class GameView extends TextureView implements
         TextureView.SurfaceTextureListener, View.OnTouchListener {
 
-
+    static final int BLOCK_COUNT = 100;
     private Thread mThread;
     volatile private boolean mIsRunnable; // thread 갱신 변수를 읽어온다.
+
+    volatile private float mTouchedX;
+    volatile private float mTouchedY;
+
+    private Pad mPad;
+    private float mPadHalfWidth;
+
+    private Ball mBall;
+    private float mBallRadius;
+
+    private  float mBlockWidth;
+    private  float mBlockHeight;
+
+    private int mLife;
 
     public GameView(final Context context){
         super(context);
@@ -64,8 +78,6 @@ public class GameView extends TextureView implements
             return true;
         }
 
-
-        //return false;
     }
 
     @Override
@@ -81,7 +93,9 @@ public class GameView extends TextureView implements
                 paint.setColor(Color.RED);
                 paint.setStyle(Paint.Style.FILL);
 
-                while (true){ // 반복
+                while (true) { // 반복
+
+                    long startTime = System.currentTimeMillis();
 
                     synchronized (GameView.this) {
                         if (!mIsRunnable) {
@@ -95,15 +109,91 @@ public class GameView extends TextureView implements
                         }
                         canvas.drawColor(Color.BLACK);
 
-                        for (Block item : mItemList) {
+                        float padLeft = mTouchedX - mPadHalfWidth;
+                        float padRight = mTouchedX + mPadHalfWidth;
+                        mPad.setLeftRight(padLeft, padRight);
+                        mBall.move();
+
+                        float ballTop = mBall.getY() - mBallRadius;
+                        float ballLeft = mBall.getX() - mBallRadius;
+                        float ballBottom = mBall.getY() + mBallRadius;
+                        float ballRight = mBall.getX() + mBallRadius;
+
+                        if (ballLeft < 0 && mBall.getSpeedX() < 0 || ballRight >= getWidth() && mBall.getSpeedX() > 0) {
+                            mBall.setSpeedX(-mBall.getSpeedX());
+                        }// 가로 방향 벽에 부딪혔으므로, 가로 속도를 반전
+                        if (ballTop < 0 ) {
+                            mBall.setSpeedY(-mBall.getSpeedY());
+                        }// 세로 방향 벽에 부딪혔으므로, 세로 속도를 반전
+
+                        if(ballTop > getHeight()){
+                            if(mLife >0){
+                                mLife--;
+                                mBall.reset();
+                            }
+                        }
+
+                        //블록과 공의 충돌 판정
+
+                        Block leftBlock = getBlock(ballLeft,mBall.getY());
+                        Block topBlock = getBlock(mBall.getX(),ballTop);
+                        Block rightBlock = getBlock(ballRight, mBall.getY());
+                        Block bottomBlock = getBlock(mBall.getX(),ballBottom);
+
+                        if(leftBlock != null){
+                            mBall.setSpeedX(-mBall.getSpeedX());
+                            leftBlock.collision();
+                        }
+                        if(topBlock != null){
+                            mBall.setSpeedY(-mBall.getSpeedY());
+                            topBlock.collision();
+                        }
+                        if(rightBlock != null){
+                            mBall.setSpeedX(-mBall.getSpeedX());
+                            rightBlock.collision();
+                        }
+                        if(bottomBlock != null){
+                            mBall.setSpeedY(-mBall.getSpeedY());
+                            bottomBlock.collision();
+                        }
+
+                        // 패드의 윗면 좌표와 공의 속도 획득
+                        float padTop = mPad.getTop();
+                        float ballSpeedY = mBall.getSpeedY();
+
+                        if( ballBottom > padTop && ballBottom-ballSpeedY <padTop && padLeft < ballRight && padRight >ballLeft){
+                            // 속도 올리기
+                            if(ballSpeedY < mBlockHeight /3){
+                                ballSpeedY *=-1.05f;
+                            } else {
+                                ballSpeedY = -ballSpeedY;
+                            }
+
+                            float ballSpeedX = mBall.getSpeedX() + (mBall.getX() - mTouchedX /10);
+                            if(ballSpeedX > mBlockWidth /5){
+                                ballSpeedX = mBlockWidth /5;
+                            }
+                            mBall.setSpeedY(ballSpeedY);
+                            mBall.setSpeedX(ballSpeedX);
+                        }
+
+
+
+                        for (DrawableItem item : mItemList) {
                             //mItemList의 내용이 하나씩 block에 전달된다.
                             item.draw(canvas, paint);
                         }
                         unlockCanvasAndPost(canvas);
+                    }//synchon end
 
-                    }
+                    long sleepTime = 16 - (System.currentTimeMillis() - startTime);
+                    if (sleepTime > 0) {
+                        try {
+                            Thread.sleep(sleepTime);
+                        } catch (InterruptedException e) {
+                        }
+                    }// if
                 }
-
             }
         });
         mIsRunnable = true;
@@ -114,8 +204,7 @@ public class GameView extends TextureView implements
 
     }
 
-    volatile private float mTouchedX;
-    volatile private float mTouchedY;
+
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
@@ -126,18 +215,42 @@ public class GameView extends TextureView implements
     }
 
 
-    private ArrayList<Block> mItemList; //mBlockList
+    private ArrayList<DrawableItem> mItemList; //mBlockList
 
     public void readyObjects(int width, int height){
-        float blockWidth = width/10;
-        float blockHeight = height/20;
-        mItemList = new ArrayList<Block>(); // mItemList 초기화
-        for (int i = 0; i< 100;i++){
-            float blockTop = i/10*blockHeight;
-            float blockLeft = i %10*blockWidth;
-            float blockBottom = blockTop + blockHeight;
-            float blockRight = blockLeft + blockWidth;
+        mBlockWidth = width/10;
+        mBlockHeight = height/20;
+        mLife = 5;
+
+        mItemList = new ArrayList<DrawableItem>(); // mItemList 초기화
+        for (int i = 0; i< BLOCK_COUNT ;i++){
+            float blockTop = i/10*mBlockHeight;
+            float blockLeft = i %10*mBlockWidth;
+            float blockBottom = blockTop + mBlockHeight;
+            float blockRight = blockLeft + mBlockWidth;
             mItemList.add(new Block(blockTop,blockLeft,blockBottom,blockRight));
         }
+
+        mPad = new Pad(height*0.8f, height*0.85f);
+        mItemList.add(mPad);
+        mPadHalfWidth = width/10;
+
+        mBallRadius = width < height ? width/40 : height /40;
+        mBall = new Ball(mBallRadius,width/2, height/2);
+        mItemList.add(mBall);
     }
+
+    //특정 좌표에 있는 블록을 가져오는 메소드
+    private Block getBlock(float x, float y){
+        int index = (int)(x / mBlockWidth)+ (int)(y/mBlockHeight) *10;
+        if(0<=index && index < BLOCK_COUNT){
+            Block block = (Block) mItemList.get(index);
+            if(block.ismIsExist()){
+                return block;
+            }
+        }
+        return null;
+    }
+
+
 }
