@@ -17,6 +17,7 @@ import android.widget.TextView;
 public class GameView extends TextureView implements
         TextureView.SurfaceTextureListener, View.OnTouchListener {
 
+
     private Thread mThread;
     volatile private boolean mIsRunnable; // thread 갱신 변수를 읽어온다.
 
