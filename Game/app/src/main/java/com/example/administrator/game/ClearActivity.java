@@ -2,10 +2,7 @@ package com.example.administrator.game;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -33,10 +30,9 @@ public class ClearActivity extends AppCompatActivity {
             finish();
         }
 
-        boolean isClear = receiveExtras.getBoolean(EXTRA_IS_CLEAR,false);
-        int blockCount = receiveExtras.getInt(EXTRA_BLOCK_COUNT,0);
-        long clearTime = receiveExtras.getLong(EXTRA_TIME,0);
-
+        boolean isClear = receiveExtras.getBoolean(EXTRA_IS_CLEAR, false);
+        int blockCount = receiveExtras.getInt(EXTRA_BLOCK_COUNT, 0);
+        long clearTime = receiveExtras.getLong(EXTRA_TIME, 0);
 
         TextView textTitle = (TextView) findViewById(R.id.textTitle);
         TextView textBlockCount = (TextView) findViewById(R.id.textBlockCount);
@@ -50,10 +46,10 @@ public class ClearActivity extends AppCompatActivity {
         }
 
         // 남은 블록 수를 표기
-        //textBlockCount.setText(getString(R.string.block_count, blockCount));
+        textBlockCount.setText(getString(R.string.block_count, blockCount));
         //경과 시간
 
-        //textClearTime.setText(R.string.time, clearTime/1000, clearTime % 1000);
+        textClearTime.setText(getString(R.string.time, clearTime/1000, clearTime % 1000));
 
         gameStart.setOnClickListener(new View.OnClickListener(){
 

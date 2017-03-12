@@ -1,11 +1,15 @@
 package com.example.administrator.game;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.SurfaceTexture;
+import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
+
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
@@ -52,7 +56,18 @@ public class GameView extends TextureView implements
         super(context);
         setSurfaceTextureListener(this);
         setOnTouchListener(this);
-        mHandler = new Handler();
+        mHandler = new Handler(){
+          //UI Thread 에서 실행되는 Handler
+            @Override
+            public void handleMessage(Message message) {
+                //처리
+                Intent intent = new Intent(context, ClearActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                intent.putExtras(message.getData());
+
+                context.startActivity(intent);
+            }
+        };
         mThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -139,12 +154,22 @@ public class GameView extends TextureView implements
                         }// 세로 방향 벽에 부딪혔으므로, 세로 속도를 반전
 
                         if(ballTop > getHeight()){
-                            if(mLife >0){
+                            if(mLife >0) {
                                 mLife--;
                                 mBall.reset();
+                            }else {
+                                    unlockCanvasAndPost(canvas);
+                                    Message message = Message.obtain();
+                                    Bundle bundle = new Bundle();
+                                    bundle.putBoolean(ClearActivity.EXTRA_IS_CLEAR,false);
+                                    bundle.putInt(ClearActivity.EXTRA_BLOCK_COUNT, getBlockCount());
+                                    bundle.putLong(ClearActivity.EXTRA_TIME, System.currentTimeMillis()-mGameStartTime);
+                                    message.setData(bundle);
+                                    mHandler.sendMessage(message);
+                                    return;
                             }
-                        }
 
+                        }
                         //블록과 공의 충돌 판정
 
                         Block leftBlock = getBlock(ballLeft,mBall.getY());
@@ -152,21 +177,29 @@ public class GameView extends TextureView implements
                         Block rightBlock = getBlock(ballRight, mBall.getY());
                         Block bottomBlock = getBlock(mBall.getX(),ballBottom);
 
+                        // 클리어 처리
+                        boolean isCollision = false;
+                        // 충돌한 블록이 있으면, 충돌 처리 한다.
+
                         if(leftBlock != null){
                             mBall.setSpeedX(-mBall.getSpeedX());
                             leftBlock.collision();
+                            isCollision = true;
                         }
                         if(topBlock != null){
                             mBall.setSpeedY(-mBall.getSpeedY());
                             topBlock.collision();
+                            isCollision = true;
                         }
                         if(rightBlock != null){
                             mBall.setSpeedX(-mBall.getSpeedX());
                             rightBlock.collision();
+                            isCollision = true;
                         }
                         if(bottomBlock != null){
                             mBall.setSpeedY(-mBall.getSpeedY());
                             bottomBlock.collision();
+                            isCollision = true;
                         }
 
                         // 패드의 윗면 좌표와 공의 속도 획득
@@ -195,10 +228,24 @@ public class GameView extends TextureView implements
                             //mItemList의 내용이 하나씩 block에 전달된다.
                             item.draw(canvas, paint);
                         }
-                        unlockCanvasAndPost(canvas);
+                        unlockCanvasAndPost(canvas); // 그린다.
+
+                        // UI Thread Handler 호출
+                        if(isCollision && getBlockCount() == 0){
+                            Message message = Message.obtain();
+                            Bundle bundle = new Bundle();
+                            bundle.putBoolean(ClearActivity.EXTRA_IS_CLEAR,true);
+                            bundle.putInt(ClearActivity.EXTRA_BLOCK_COUNT,0);
+                            bundle.putLong(ClearActivity.EXTRA_TIME, System.currentTimeMillis()-mGameStartTime);
+                            message.setData(bundle);
+
+                            mHandler.sendMessage(message);
+
+                        }
+
                     }//synchon end
 
-                    long sleepTime = 16 - (System.currentTimeMillis() - startTime);
+                    long sleepTime = 16 - (System.currentTimeMillis() - startTime); // 16 = 1/60 초
                     if (sleepTime > 0) {
                         try {
                             Thread.sleep(sleepTime);

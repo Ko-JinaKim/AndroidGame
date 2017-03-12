@@ -3,6 +3,8 @@ package com.example.administrator.game;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.Bundle;
+import android.widget.Button;
 
 import java.util.ArrayList;
 
@@ -20,6 +22,10 @@ public class Block implements DrawableItem {
 
     private boolean mIsCollision = false; // 충돌 상태를 기록 하는 플래그
     private boolean mIsExist = true;
+
+    private static final String KEY_HARD = "hard";
+
+    private static final String KEY_BLOCK = "block";
 
     public Block (float top, float left, float bottom, float right){
         mTop = top;
@@ -64,5 +70,20 @@ public class Block implements DrawableItem {
     public boolean isExist (){
         return mIsExist;
     }
+
+
+    //bundle 상태를 저장한다.
+    public Bundle save(){
+        Bundle outState = new Bundle();
+        outState.putInt(KEY_HARD, mHard);
+        return outState;
+    }
+    //상태 복원 @param inState 복원할 상태가 저장된 Bundle
+    public void restore(Bundle inSate){
+        mHard = inSate.getInt(KEY_HARD);
+        mIsExist =  mHard > 0;
+    }
+
+
 
 }
