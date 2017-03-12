@@ -1,9 +1,15 @@
 package com.example.administrator.game;
 
+import android.content.Intent;
+import android.icu.text.DateFormat;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewConfiguration;
+
+import java.lang.reflect.Field;
 
 public class GameActivity extends AppCompatActivity {
     private GameView mView;
@@ -11,10 +17,19 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mView = new GameView(this);
+        mView = new GameView(this, savedInstanceState); // 저장된 데이터 저장
+
+        try{
+            ViewConfiguration config = ViewConfiguration.get(this);
+            Field menukeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            if(menukeyField != null){
+                menukeyField.setAccessible(true);
+                menukeyField.setBoolean(config, false);
+            }
+        } catch (Exception e){
+
+        }
         setContentView(mView);
-
-
     }
 
     @Override
@@ -33,6 +48,8 @@ public class GameActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
 
@@ -50,4 +67,12 @@ public class GameActivity extends AppCompatActivity {
         super.onPause();
         mView.stop();
     }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mView.onSaveInstanceState(outState);
+    }
+
+
 }

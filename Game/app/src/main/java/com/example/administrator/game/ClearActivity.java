@@ -3,9 +3,13 @@ package com.example.administrator.game;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.widget.Button;
 import android.widget.TextView;
+
+import java.lang.reflect.Field;
 
 public class ClearActivity extends AppCompatActivity {
 
@@ -17,6 +21,18 @@ public class ClearActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_clear);
+
+        try {
+            ViewConfiguration config = ViewConfiguration.get(this);
+            Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            if(menuKeyField != null){
+                menuKeyField.setAccessible(true);
+                menuKeyField.setBoolean(config,false);
+            }
+        } catch (Exception e){
+            setContentView(R.layout.activity_clear);
+        }
+
 
         Intent receiveIntent = getIntent();
         if(receiveIntent == null){
@@ -65,4 +81,15 @@ public class ClearActivity extends AppCompatActivity {
 
     }// onCreate
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        int id = item.getItemId();
+        if(id == R.id.action_settings){
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 }
